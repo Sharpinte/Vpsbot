@@ -26,6 +26,11 @@ echo "Cloning the Vpsbot repository from GitHub..."
 git clone https://github.com/Sharpinte/Vpsbot.git
 cd Vpsbot || { echo "Error: Failed to change directory to Vpsbot."; exit 1; }
 
+# Print current working directory and list files
+echo "Current directory after cloning: $(pwd)"
+echo "Files in the current directory:"
+ls -l
+
 # Create a virtual environment
 echo "Setting up a Python virtual environment..."
 python3 -m venv venv
