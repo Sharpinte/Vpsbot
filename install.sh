@@ -83,13 +83,17 @@ echo "Installation complete! Your configuration has been saved to config.json."
 echo "Starting both the bot and web server..."
 
 # Ensure bot.py and web.py exist before starting them
-if [ ! -f "bot.py" ]; then
+# Use absolute paths for bot.py and web.py
+BOT_PY_PATH=$(pwd)/bot.py
+WEB_PY_PATH=$(pwd)/web.py
+
+if [ ! -f "$BOT_PY_PATH" ]; then
     echo "Error: bot.py not found. Please ensure it's in the same directory as this script."
     deactivate
     exit 1
 fi
 
-if [ ! -f "web.py" ]; then
+if [ ! -f "$WEB_PY_PATH" ]; then
     echo "Error: web.py not found. Please ensure it's in the same directory as this script."
     deactivate
     exit 1
@@ -97,10 +101,10 @@ fi
 
 # Start the bot and web server in the background
 echo "Starting the Discord bot..."
-python bot.py &
+python "$BOT_PY_PATH" &
 
 echo "Starting the web server..."
-python web.py &
+python "$WEB_PY_PATH" &
 
 # Wait for both processes to run in the background
 wait
