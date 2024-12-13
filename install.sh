@@ -28,13 +28,13 @@ install_python() {
 # Function to download bot.py
 download_bot() {
     echo "Downloading bot.py..."
-    wget -O bot.py https://github.com/Sharpinte/Vpsbot/blob/main/bot.py?raw=true
+    wget -O bot.py https://raw.githubusercontent.com/Sharpinte/Vpsbot/main/bot.py
 }
 
 # Function to download web.py
 download_web() {
     echo "Downloading web.py..."
-    wget -O web.py https://github.com/Sharpinte/Vpsbot/blob/main/web.py?raw=true
+    wget -O web.py https://raw.githubusercontent.com/Sharpinte/Vpsbot/main/web.py
 }
 
 # Function to install bot and web server
@@ -172,3 +172,4 @@ show_menu() {
 
 # Run the menu system
 show_menu
+
