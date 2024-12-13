@@ -21,6 +21,11 @@ install_python() {
 # Install Python if necessary
 install_python
 
+# Clone the repository
+echo "Cloning the Vpsbot repository from GitHub..."
+git clone https://github.com/Sharpinte/Vpsbot.git
+cd Vpsbot || { echo "Error: Failed to change directory to Vpsbot."; exit 1; }
+
 # Create a virtual environment
 echo "Setting up a Python virtual environment..."
 python3 -m venv venv
@@ -83,7 +88,6 @@ echo "Installation complete! Your configuration has been saved to config.json."
 echo "Starting both the bot and web server..."
 
 # Ensure bot.py and web.py exist before starting them
-# Use absolute paths for bot.py and web.py
 BOT_PY_PATH=$(pwd)/bot.py
 WEB_PY_PATH=$(pwd)/web.py
 
@@ -108,3 +112,4 @@ python "$WEB_PY_PATH" &
 
 # Wait for both processes to run in the background
 wait
+
