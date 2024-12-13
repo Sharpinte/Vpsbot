@@ -5,19 +5,21 @@ echo "Welcome to the KVM VPS Bot Installer!"
 echo "This script will install Python, set up a virtual environment, and configure the bot."
 echo ""
 
-# Check if Python3 is installed, if not, install it
-echo "Checking for Python 3 installation..."
-if ! command -v python3 &>/dev/null; then
-    echo "Python 3 not found. Installing Python 3..."
-    sudo apt update
-    sudo apt install -y python3 python3-venv python3-pip
-else
-    echo "Python 3 is already installed."
-fi
+# Function to check and install Python 3 if necessary
+install_python() {
+    echo "Checking for Python 3 installation..."
+    if ! command -v python3 &> /dev/null
+    then
+        echo "Python 3 is not installed. Installing Python 3..."
+        sudo apt update
+        sudo apt install -y python3 python3-venv python3-pip
+    else
+        echo "Python 3 is already installed."
+    fi
+}
 
-# Check Python version
-echo "Checking Python version..."
-python3 --version || { echo "Python 3 is not installed properly. Exiting."; exit 1; }
+# Install Python if necessary
+install_python
 
 # Create a virtual environment
 echo "Setting up a Python virtual environment..."
@@ -26,6 +28,10 @@ python3 -m venv venv
 # Activate the virtual environment
 echo "Activating the virtual environment..."
 source venv/bin/activate
+
+# Upgrade pip within the virtual environment
+echo "Upgrading pip to the latest version..."
+pip install --upgrade pip
 
 # Install Python dependencies
 echo "Installing Python dependencies..."
@@ -41,7 +47,7 @@ read -p "Enter max RAM usage percentage before suspension (e.g., 90): " MAX_RAM_
 read -p "Enter max CPU usage percentage before suspension (e.g., 90): " MAX_CPU_USAGE
 read -p "Enter the max RAM (in GB) for all VPS combined (e.g., 64): " MAX_RAM
 read -p "Enter the max CPU cores for all VPS combined (e.g., 32): " MAX_CPU
-read -p "Enter the max storage (in GB) for all VPS combined (e.g., 1000): " MAX_STORAGE"
+read -p "Enter the max storage (in GB) for all VPS combined (e.g., 1000): " MAX_STORAGE
 
 # Create the config.json file
 echo "Creating the configuration file (config.json)..."
@@ -49,7 +55,7 @@ cat <<EOF > config.json
 {
     "discord_token": "$DISCORD_TOKEN",
     "owners": ["$OWNER_ID"],
-    "admins": [${ADMIN_IDS//,/\", \"} ],
+    "admins": [${ADMIN_IDS//,/\", \"}],
     "vps": {},
     "storage_per_gb": $STORAGE_PER_GB,
     "anti_crypto": {
@@ -65,8 +71,8 @@ cat <<EOF > config.json
 }
 EOF
 
-# Create bot.py file
-echo "Creating the bot.py file..."
+# Install the bot.py and web.py scripts
+echo "Creating bot.py script..."
 cat <<EOF > bot.py
 import discord
 from discord.ext import commands
@@ -144,14 +150,47 @@ async def create_vps(ctx, memory: int, cores: int, customer: str):
     except Exception as e:
         await ctx.send(f"❌ Failed to create VPS: {str(e)}")
 
+@bot.command()
+async def set_storage(ctx, ram_gb: int, per_storage_gb: float):
+    if not is_owner(ctx):
+        await ctx.send("You don't have permission to use this command.")
+        return
+    config["storage_per_gb"] = per_storage_gb
+    save_config()
+    await ctx.send(f"✅ Default storage set: {per_storage_gb}GB per {ram_gb}GB RAM.")
+
+@bot.command()
+async def suspend_vps(ctx, vps_id: str, *, reason: str):
+    if not is_admin(ctx):
+        await ctx.send("You don't have permission to use this command.")
+        return
+    vps = config["vps"].get(vps_id)
+    if not vps:
+        await ctx.send("❌ VPS not found.")
+        return
+
+    # Suspend VPS
+    try:
+        subprocess.run(["virsh", "suspend", vps_id], check=True)
+        vps["status"] = "suspended"
+        save_config()
+
+        # Notify
+        customer = vps["customer"]
+        await ctx.send(f"✅ VPS `{vps_id}` suspended. Reason: {reason}")
+        channel = discord.utils.get(bot.get_all_channels(), name=config["notification_channel"])
+        if channel:
+            await channel.send(f"🚨 VPS `{vps_id}` owned by `{customer}` suspended. Reason: {reason}")
+    except Exception as e:
+        await ctx.send(f"❌ Failed to suspend VPS: {str(e)}")
+
 # Add additional commands here...
 
 # Run the bot
 bot.run(config["discord_token"])
 EOF
 
-# Create web.py file
-echo "Creating the web.py file..."
+echo "Creating web.py script..."
 cat <<EOF > web.py
 from flask import Flask, jsonify, request
 import json
@@ -200,15 +239,10 @@ EOF
 # Final message
 echo ""
 echo "Installation complete! Your configuration has been saved to config.json."
-echo "Both bot.py and web.py have been created."
 echo "To run the bot, activate the virtual environment and start the bot:"
 echo "    source venv/bin/activate"
-echo "    python bot.py &"
+echo "    python bot.py"
 echo ""
-echo "To enable the web interface, run:"
-echo "    python web.py &"
+echo "If you want to enable the web interface, run:"
+echo "    python web.py"
 
-# Run bot.py and web.py in the background
-echo "Starting bot.py and web.py..."
-python bot.py &
-python web.py &
