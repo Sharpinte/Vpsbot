@@ -81,13 +81,26 @@ EOF
 echo ""
 echo "Installation complete! Your configuration has been saved to config.json."
 echo "Starting both the bot and web server..."
-echo "To run the bot, activate the virtual environment and start the bot manually if needed:"
-echo "    source venv/bin/activate"
-echo "    python bot.py"
-echo ""
-echo "If you want to enable the web interface, run:"
-echo "    python web.py"
 
-# Start both bot and web server in the background
+# Ensure bot.py and web.py exist before starting them
+if [ ! -f "bot.py" ]; then
+    echo "Error: bot.py not found. Please ensure it's in the same directory as this script."
+    deactivate
+    exit 1
+fi
+
+if [ ! -f "web.py" ]; then
+    echo "Error: web.py not found. Please ensure it's in the same directory as this script."
+    deactivate
+    exit 1
+fi
+
+# Start the bot and web server in the background
+echo "Starting the Discord bot..."
 python bot.py &
+
+echo "Starting the web server..."
 python web.py &
+
+# Wait for both processes to run in the background
+wait
