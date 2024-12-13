@@ -5,12 +5,15 @@ echo "Welcome to the KVM VPS Bot Installer!"
 echo "This script will install Python, set up a virtual environment, and configure the bot."
 echo ""
 
-# Update package list and ensure Python is installed
-echo "Updating package list..."
-sudo apt update
-
-echo "Installing required system packages..."
-sudo apt install -y python3 python3-venv python3-pip libvirt-bin qemu-kvm virt-manager
+# Check if Python3 is installed, if not, install it
+echo "Checking for Python 3 installation..."
+if ! command -v python3 &>/dev/null; then
+    echo "Python 3 not found. Installing Python 3..."
+    sudo apt update
+    sudo apt install -y python3 python3-venv python3-pip
+else
+    echo "Python 3 is already installed."
+fi
 
 # Check Python version
 echo "Checking Python version..."
@@ -209,4 +212,3 @@ echo "    python web.py &"
 echo "Starting bot.py and web.py..."
 python bot.py &
 python web.py &
-
