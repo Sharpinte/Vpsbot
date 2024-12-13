@@ -27,18 +27,14 @@ install_python() {
 
 # Function to clone the repository
 git_clone_repo() {
-    if [ ! -d "Vpsbot" ]; then
-        echo "Cloning the repository from GitHub..."
-        git clone https://github.com/Sharpinte/Vpsbot/
-    else
-        echo "Repository already cloned."
-    fi
+    echo "Cloning the repository from GitHub into the current directory..."
+    git clone https://github.com/Sharpinte/Vpsbot/ . --depth=1
+    rm -rf .git
 }
 
 # Function to install bot and web server
 install_bot_and_web() {
     git_clone_repo
-    cd Vpsbot || exit
 
     # Create virtual environment
     python3 -m venv venv
@@ -83,7 +79,6 @@ EOF
 # Function to install bot only
 install_bot_only() {
     git_clone_repo
-    cd Vpsbot || exit
 
     # Create virtual environment
     python3 -m venv venv
@@ -127,7 +122,6 @@ EOF
 # Function to install web server only
 install_web_only() {
     git_clone_repo
-    cd Vpsbot || exit
 
     # Create virtual environment
     python3 -m venv venv
@@ -162,9 +156,6 @@ uninstall_bot_and_web() {
     # Remove installation scripts (install.sh, install.sh.x)
     rm -f install.sh install.sh.1 install.sh.2 install.sh.3
 
-    # Remove the vpsbot folder
-    rm -rf Vpsbot
-
     echo "Uninstallation complete!"
 }
 
@@ -188,4 +179,3 @@ show_menu() {
 
 # Run the menu system
 show_menu
-
