@@ -25,8 +25,21 @@ install_python() {
     fi
 }
 
+# Function to clone the repository
+git_clone_repo() {
+    if [ ! -d "Vpsbot" ]; then
+        echo "Cloning the repository from GitHub..."
+        git clone https://github.com/Sharpinte/Vpsbot/
+    else
+        echo "Repository already cloned."
+    fi
+}
+
 # Function to install bot and web server
 install_bot_and_web() {
+    git_clone_repo
+    cd Vpsbot || exit
+
     # Create virtual environment
     python3 -m venv venv
     source venv/bin/activate
@@ -69,6 +82,9 @@ EOF
 
 # Function to install bot only
 install_bot_only() {
+    git_clone_repo
+    cd Vpsbot || exit
+
     # Create virtual environment
     python3 -m venv venv
     source venv/bin/activate
@@ -110,6 +126,9 @@ EOF
 
 # Function to install web server only
 install_web_only() {
+    git_clone_repo
+    cd Vpsbot || exit
+
     # Create virtual environment
     python3 -m venv venv
     source venv/bin/activate
