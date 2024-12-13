@@ -149,6 +149,7 @@ install_web_only() {
 # Function to uninstall bot and web server
 uninstall_bot_and_web() {
     echo "Uninstalling bot and web server..."
+
     # Stop running bot and web server if they are running
     pkill -f bot.py
     pkill -f web.py
@@ -157,6 +158,12 @@ uninstall_bot_and_web() {
     rm -rf venv
     rm -f config.json
     rm -f requirements.txt
+
+    # Remove installation scripts (install.sh, install.sh.x)
+    rm -f install.sh install.sh.1 install.sh.2 install.sh.3
+
+    # Remove the vpsbot folder
+    rm -rf Vpsbot
 
     echo "Uninstallation complete!"
 }
