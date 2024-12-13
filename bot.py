@@ -1,8 +1,10 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import json
 import subprocess
 from flask import Flask, jsonify
+import threading
 
 # Load configuration
 with open("config.json", "r") as f:
@@ -37,11 +39,11 @@ async def check_anti_crypto(vps_id, ram_usage, cpu_usage):
         if channel:
             await channel.send(f"⚠️ VPS `{vps_id}` owned by <@{owner_id}> suspended due to high resource usage.")
 
-# Commands
-@bot.command()
-async def create_vps(ctx, memory: int, cores: int, customer: str):
-    if not is_admin(ctx):
-        await ctx.send("You don't have permission to use this command.")
+# Slash Command for creating a VPS
+@bot.tree.command(name="create_vps", description="Create a new VPS")
+async def create_vps(interaction: discord.Interaction, memory: int, cores: int, customer: str):
+    if not is_admin(interaction):
+        await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
         return
 
     try:
@@ -70,27 +72,29 @@ async def create_vps(ctx, memory: int, cores: int, customer: str):
             "status": "running"
         }
         save_config()
-        await ctx.send(f"✅ VPS `{vps_id}` created for customer `{customer}`.")
+        await interaction.response.send_message(f"✅ VPS `{vps_id}` created for customer `{customer}`.", ephemeral=True)
     except Exception as e:
-        await ctx.send(f"❌ Failed to create VPS: {str(e)}")
+        await interaction.response.send_message(f"❌ Failed to create VPS: {str(e)}", ephemeral=True)
 
-@bot.command()
-async def set_storage(ctx, ram_gb: int, per_storage_gb: float):
-    if not is_owner(ctx):
-        await ctx.send("You don't have permission to use this command.")
+# Slash Command for setting storage per GB
+@bot.tree.command(name="set_storage", description="Set the default storage per GB of RAM")
+async def set_storage(interaction: discord.Interaction, ram_gb: int, per_storage_gb: float):
+    if not is_owner(interaction):
+        await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
         return
     config["storage_per_gb"] = per_storage_gb
     save_config()
-    await ctx.send(f"✅ Default storage set: {per_storage_gb}GB per {ram_gb}GB RAM.")
+    await interaction.response.send_message(f"✅ Default storage set: {per_storage_gb}GB per {ram_gb}GB RAM.", ephemeral=True)
 
-@bot.command()
-async def suspend_vps(ctx, vps_id: str, *, reason: str):
-    if not is_admin(ctx):
-        await ctx.send("You don't have permission to use this command.")
+# Slash Command for suspending a VPS
+@bot.tree.command(name="suspend_vps", description="Suspend a VPS")
+async def suspend_vps(interaction: discord.Interaction, vps_id: str, reason: str):
+    if not is_admin(interaction):
+        await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
         return
     vps = config["vps"].get(vps_id)
     if not vps:
-        await ctx.send("❌ VPS not found.")
+        await interaction.response.send_message("❌ VPS not found.", ephemeral=True)
         return
 
     # Suspend VPS
@@ -101,14 +105,46 @@ async def suspend_vps(ctx, vps_id: str, *, reason: str):
 
         # Notify
         customer = vps["customer"]
-        await ctx.send(f"✅ VPS `{vps_id}` suspended. Reason: {reason}")
+        await interaction.response.send_message(f"✅ VPS `{vps_id}` suspended. Reason: {reason}", ephemeral=True)
         channel = discord.utils.get(bot.get_all_channels(), name=config["notification_channel"])
         if channel:
             await channel.send(f"🚨 VPS `{vps_id}` owned by `{customer}` suspended. Reason: {reason}")
     except Exception as e:
-        await ctx.send(f"❌ Failed to suspend VPS: {str(e)}")
+        await interaction.response.send_message(f"❌ Failed to suspend VPS: {str(e)}", ephemeral=True)
 
-# Add additional commands here...
+# Flask web interface
+app = Flask(__name__)
 
-# Run the bot
-bot.run(config["discord_token"])
+@app.route("/vps", methods=["GET"])
+def get_vps():
+    return jsonify(config["vps"])
+
+@app.route("/vps/<vps_id>", methods=["GET"])
+def get_vps_info(vps_id):
+    vps = config["vps"].get(vps_id)
+    if not vps:
+        return jsonify({"error": "VPS not found"}), 404
+    return jsonify(vps)
+
+@app.route("/set-cap", methods=["POST"])
+def set_cap():
+    data = request.json
+    config["max_resources"] = {
+        "ram": data.get("ram"),
+        "cpu": data.get("cpu"),
+        "storage": data.get("storage")
+    }
+    save_config()
+    return jsonify({"message": "Resource caps updated."})
+
+# Start both Flask and Discord bot in separate threads
+def run_flask():
+    app.run(port=5000)
+
+def run_bot():
+    bot.run(config["discord_token"])
+
+if __name__ == "__main__":
+    # Start the Flask web server and bot concurrently using threads
+    threading.Thread(target=run_flask).start()
+    threading.Thread(target=run_bot).start()
