@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import json
 import subprocess
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import threading
 
 # Load configuration
@@ -139,12 +139,18 @@ def set_cap():
 
 # Start both Flask and Discord bot in separate threads
 def run_flask():
-    app.run(port=5000)
+    # Start Flask with use_reloader=False to avoid Flask reloading
+    app.run(port=5000, use_reloader=False)
 
 def run_bot():
     bot.run(config["discord_token"])
 
 if __name__ == "__main__":
     # Start the Flask web server and bot concurrently using threads
-    threading.Thread(target=run_flask).start()
-    threading.Thread(target=run_bot).start()
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.daemon = True  # Make sure the Flask thread exits when the program exits
+    flask_thread.start()
+
+    # Start the bot in another thread
+    bot_thread = threading.Thread(target=run_bot)
+    bot_thread.start()
