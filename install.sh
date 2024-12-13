@@ -25,20 +25,30 @@ install_python() {
     fi
 }
 
-# Function to clone the repository
-git_clone_repo() {
-    echo "Cloning the repository from GitHub into the current directory..."
-    git clone https://github.com/Sharpinte/Vpsbot/ . --depth=1
-    rm -rf .git
+# Function to download bot.py
+download_bot() {
+    echo "Downloading bot.py..."
+    wget -O bot.py https://github.com/Sharpinte/Vpsbot/blob/main/bot.py?raw=true
+}
+
+# Function to download web.py
+download_web() {
+    echo "Downloading web.py..."
+    wget -O web.py https://github.com/Sharpinte/Vpsbot/blob/main/web.py?raw=true
 }
 
 # Function to install bot and web server
 install_bot_and_web() {
-    git_clone_repo
+    # Ensure Python is installed
+    install_python
 
     # Create virtual environment
     python3 -m venv venv
     source venv/bin/activate
+
+    # Download files
+    download_bot
+    download_web
 
     # Install dependencies
     echo "Installing Python dependencies..."
@@ -70,19 +80,23 @@ EOF
 
     # Start the bot and web server
     echo "Starting bot and web server..."
-    python3 bot.py &
-    python3 web.py &
+    python bot.py &
+    python web.py &
 
     echo "Installation complete!"
 }
 
 # Function to install bot only
 install_bot_only() {
-    git_clone_repo
+    # Ensure Python is installed
+    install_python
 
     # Create virtual environment
     python3 -m venv venv
     source venv/bin/activate
+
+    # Download bot file
+    download_bot
 
     # Install dependencies
     echo "Installing Python dependencies for bot..."
@@ -114,30 +128,9 @@ EOF
 
     # Start the bot
     echo "Starting bot..."
-    python3 bot.py &
+    python bot.py &
 
     echo "Bot installation complete!"
-}
-
-# Function to install web server only
-install_web_only() {
-    git_clone_repo
-
-    # Create virtual environment
-    python3 -m venv venv
-    source venv/bin/activate
-
-    # Install dependencies
-    echo "Installing Python dependencies for web server..."
-    pip install --upgrade pip
-    echo -e "Flask" > requirements.txt
-    pip install -r requirements.txt
-
-    # Start the web server
-    echo "Starting web server..."
-    python3 web.py &
-
-    echo "Web server installation complete!"
 }
 
 # Function to uninstall bot and web server
@@ -153,8 +146,8 @@ uninstall_bot_and_web() {
     rm -f config.json
     rm -f requirements.txt
 
-    # Remove installation scripts (install.sh, install.sh.x)
-    rm -f install.sh install.sh.1 install.sh.2 install.sh.3
+    # Remove the script files
+    rm -f bot.py web.py install.sh install.sh.1 install.sh.2 install.sh.3
 
     echo "Uninstallation complete!"
 }
