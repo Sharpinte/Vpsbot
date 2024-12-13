@@ -1,0 +1,17 @@
+{
+    "discord_token": "your-discord-bot-token",
+    "owners": ["1229863815760445440"],
+    "admins": ["1229863815760445440"],
+    "vps": {},
+    "storage_per_gb": 2.5,
+    "anti_crypto": {
+        "max_ram_usage": 90,
+        "max_cpu_usage": 90
+    },
+    "notification_channel": "1272310591310004366",
+    "max_resources": {
+        "ram": 64,
+        "cpu": 32,
+        "storage": 1000
+    }
+}
