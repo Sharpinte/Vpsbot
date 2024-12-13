@@ -68,11 +68,12 @@ install_bot_and_web() {
 
     # Create config.json file
     echo "Creating the configuration file (config.json)..."
+    ADMIN_IDS_ARRAY=$(echo $ADMIN_IDS | sed 's/,/\", \"/g')  # This will properly format the admins array
     cat <<EOF > config.json
 {
     "discord_token": "$DISCORD_TOKEN",
     "owners": ["$OWNER_ID"],
-    "admins": [${ADMIN_IDS//,/\", \"}"],
+    "admins": ["$ADMIN_IDS_ARRAY"],
     "vps": {},
     "notification_channel": "$NOTIFICATION_CHANNEL"
 }
@@ -116,11 +117,12 @@ install_bot_only() {
 
     # Create config.json file
     echo "Creating the configuration file (config.json)..."
+    ADMIN_IDS_ARRAY=$(echo $ADMIN_IDS | sed 's/,/\", \"/g')  # This will properly format the admins array
     cat <<EOF > config.json
 {
     "discord_token": "$DISCORD_TOKEN",
     "owners": ["$OWNER_ID"],
-    "admins": [${ADMIN_IDS//,/\", \"}"],
+    "admins": ["$ADMIN_IDS_ARRAY"],
     "vps": {},
     "notification_channel": "$NOTIFICATION_CHANNEL"
 }
@@ -172,4 +174,3 @@ show_menu() {
 
 # Run the menu system
 show_menu
-
