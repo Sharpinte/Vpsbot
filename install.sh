@@ -1,11 +1,18 @@
 #!/bin/bash
 
-# Welcome message
-echo "Welcome to the KVM VPS Bot Installer!"
-echo "This script will install Python, set up a virtual environment, and configure the bot."
-echo ""
+# Function to display ASCII art
+display_ascii_art() {
+    echo "VPS BOT"
+    echo "---------------------------"
+    echo "    __   __    ____       "
+    echo "   |  | |  |  / ___|___   "
+    echo "   |  | |  | | |   / _ \  "
+    echo "   |  |_|  | | |__| (_) | "
+    echo "   |______|   \____\___/  "
+    echo "---------------------------"
+}
 
-# Function to check and install Python 3 if necessary
+# Function to install Python if needed
 install_python() {
     echo "Checking for Python 3 installation..."
     if ! command -v python3 &> /dev/null
@@ -18,102 +25,140 @@ install_python() {
     fi
 }
 
-# Install Python if necessary
-install_python
+# Function to install bot and web server
+install_bot_and_web() {
+    # Create virtual environment
+    python3 -m venv venv
+    source venv/bin/activate
 
-# Clone the repository
-echo "Cloning the Vpsbot repository from GitHub..."
-git clone https://github.com/Sharpinte/Vpsbot.git
-cd Vpsbot || { echo "Error: Failed to change directory to Vpsbot."; exit 1; }
-
-# Print current working directory and list files
-echo "Current directory after cloning: $(pwd)"
-echo "Files in the current directory:"
-ls -l
-
-# Create a virtual environment
-echo "Setting up a Python virtual environment..."
-python3 -m venv venv
-
-# Activate the virtual environment
-echo "Activating the virtual environment..."
-source venv/bin/activate
-
-# Upgrade pip within the virtual environment
-echo "Upgrading pip to the latest version..."
-pip install --upgrade pip
-
-# Check if requirements.txt exists, if not, create it
-if [ ! -f requirements.txt ]; then
-    echo "Creating requirements.txt..."
+    # Install dependencies
+    echo "Installing Python dependencies..."
+    pip install --upgrade pip
     echo -e "discord.py\nFlask" > requirements.txt
-fi
+    pip install -r requirements.txt
 
-# Install Python dependencies
-echo "Installing Python dependencies..."
-pip install -r requirements.txt || { echo "Failed to install Python dependencies. Exiting."; deactivate; exit 1; }
+    # Prompt user for configuration
+    echo "Enter your Discord Bot Token: "
+    read DISCORD_TOKEN
+    echo "Enter the Owner's Discord User ID: "
+    read OWNER_ID
+    echo "Enter Admin Discord User IDs (comma-separated): "
+    read ADMIN_IDS
+    echo "Enter the notification channel name (e.g., 'vps-alerts'): "
+    read NOTIFICATION_CHANNEL
 
-# Prompt for bot configuration
-read -p "Enter your Discord Bot Token: " DISCORD_TOKEN
-read -p "Enter the Owner's Discord User ID: " OWNER_ID
-read -p "Enter Admin Discord User IDs (comma-separated): " ADMIN_IDS
-read -p "Enter the notification channel name (e.g., 'vps-alerts'): " NOTIFICATION_CHANNEL
-read -p "Enter default storage per GB of RAM (e.g., 2.5): " STORAGE_PER_GB
-read -p "Enter max RAM usage percentage before suspension (e.g., 90): " MAX_RAM_USAGE
-read -p "Enter max CPU usage percentage before suspension (e.g., 90): " MAX_CPU_USAGE
-read -p "Enter the max RAM (in GB) for all VPS combined (e.g., 64): " MAX_RAM
-read -p "Enter the max CPU cores for all VPS combined (e.g., 32): " MAX_CPU
-read -p "Enter the max storage (in GB) for all VPS combined (e.g., 1000): " MAX_STORAGE
-
-# Create the config.json file
-echo "Creating the configuration file (config.json)..."
-cat <<EOF > config.json
+    # Create config.json file
+    echo "Creating the configuration file (config.json)..."
+    cat <<EOF > config.json
 {
     "discord_token": "$DISCORD_TOKEN",
     "owners": ["$OWNER_ID"],
-    "admins": [${ADMIN_IDS//,/\", \"}],
+    "admins": [${ADMIN_IDS//,/\", \"}"],
     "vps": {},
-    "storage_per_gb": $STORAGE_PER_GB,
-    "anti_crypto": {
-        "max_ram_usage": $MAX_RAM_USAGE,
-        "max_cpu_usage": $MAX_CPU_USAGE
-    },
-    "notification_channel": "$NOTIFICATION_CHANNEL",
-    "max_resources": {
-        "ram": $MAX_RAM,
-        "cpu": $MAX_CPU,
-        "storage": $MAX_STORAGE
-    }
+    "notification_channel": "$NOTIFICATION_CHANNEL"
 }
 EOF
 
-# Final message
-echo ""
-echo "Installation complete! Your configuration has been saved to config.json."
-echo "Starting both the bot and web server..."
+    # Start the bot and web server
+    echo "Starting bot and web server..."
+    python bot.py &
+    python web.py &
 
-# Ensure bot.py and web.py exist before starting them
-BOT_PY_PATH=$(pwd)/bot.py
-WEB_PY_PATH=$(pwd)/web.py
+    echo "Installation complete!"
+}
 
-if [ ! -f "$BOT_PY_PATH" ]; then
-    echo "Error: bot.py not found. Please ensure it's in the same directory as this script."
-    deactivate
-    exit 1
-fi
+# Function to install bot only
+install_bot_only() {
+    # Create virtual environment
+    python3 -m venv venv
+    source venv/bin/activate
 
-if [ ! -f "$WEB_PY_PATH" ]; then
-    echo "Error: web.py not found. Please ensure it's in the same directory as this script."
-    deactivate
-    exit 1
-fi
+    # Install dependencies
+    echo "Installing Python dependencies for bot..."
+    pip install --upgrade pip
+    echo -e "discord.py" > requirements.txt
+    pip install -r requirements.txt
 
-# Start the bot and web server in the background
-echo "Starting the Discord bot..."
-python "$BOT_PY_PATH" &
+    # Prompt user for configuration
+    echo "Enter your Discord Bot Token: "
+    read DISCORD_TOKEN
+    echo "Enter the Owner's Discord User ID: "
+    read OWNER_ID
+    echo "Enter Admin Discord User IDs (comma-separated): "
+    read ADMIN_IDS
+    echo "Enter the notification channel name (e.g., 'vps-alerts'): "
+    read NOTIFICATION_CHANNEL
 
-echo "Starting the web server..."
-python "$WEB_PY_PATH" &
+    # Create config.json file
+    echo "Creating the configuration file (config.json)..."
+    cat <<EOF > config.json
+{
+    "discord_token": "$DISCORD_TOKEN",
+    "owners": ["$OWNER_ID"],
+    "admins": [${ADMIN_IDS//,/\", \"}"],
+    "vps": {},
+    "notification_channel": "$NOTIFICATION_CHANNEL"
+}
+EOF
 
-# Wait for both processes to run in the background
-wait
+    # Start the bot
+    echo "Starting bot..."
+    python bot.py &
+
+    echo "Bot installation complete!"
+}
+
+# Function to install web server only
+install_web_only() {
+    # Create virtual environment
+    python3 -m venv venv
+    source venv/bin/activate
+
+    # Install dependencies
+    echo "Installing Python dependencies for web server..."
+    pip install --upgrade pip
+    echo -e "Flask" > requirements.txt
+    pip install -r requirements.txt
+
+    # Start the web server
+    echo "Starting web server..."
+    python web.py &
+
+    echo "Web server installation complete!"
+}
+
+# Function to uninstall bot and web server
+uninstall_bot_and_web() {
+    echo "Uninstalling bot and web server..."
+    # Stop running bot and web server if they are running
+    pkill -f bot.py
+    pkill -f web.py
+
+    # Remove the virtual environment and configuration files
+    rm -rf venv
+    rm -f config.json
+    rm -f requirements.txt
+
+    echo "Uninstallation complete!"
+}
+
+# Function to show the main menu
+show_menu() {
+    display_ascii_art
+    echo "Please select an option:"
+    echo "[1] Install bot only"
+    echo "[2] Install web server + bot"
+    echo "[3] Uninstall bot and web server"
+    echo "[4] Exit"
+    read -p "Enter your choice [1-4]: " choice
+    case $choice in
+        1) install_bot_only ;;
+        2) install_bot_and_web ;;
+        3) uninstall_bot_and_web ;;
+        4) exit 0 ;;
+        *) echo "Invalid choice. Please try again." ; show_menu ;;
+    esac
+}
+
+# Run the menu system
+show_menu
