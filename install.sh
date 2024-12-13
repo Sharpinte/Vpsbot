@@ -74,8 +74,8 @@ EOF
 
     # Start the bot and web server
     echo "Starting bot and web server..."
-    python bot.py &
-    python web.py &
+    python3 bot.py &
+    python3 web.py &
 
     echo "Installation complete!"
 }
@@ -119,7 +119,7 @@ EOF
 
     # Start the bot
     echo "Starting bot..."
-    python bot.py &
+    python3 bot.py &
 
     echo "Bot installation complete!"
 }
@@ -141,7 +141,7 @@ install_web_only() {
 
     # Start the web server
     echo "Starting web server..."
-    python web.py &
+    python3 web.py &
 
     echo "Web server installation complete!"
 }
