@@ -12,16 +12,35 @@ display_ascii_art() {
     echo "---------------------------"
 }
 
-# Function to install Python if needed
+# Function to check and install Python 3
 install_python() {
     echo "Checking for Python 3 installation..."
-    if ! command -v python3 &> /dev/null
-    then
+
+    # Check if Python 3 is installed
+    if ! command -v python3 &> /dev/null; then
         echo "Python 3 is not installed. Installing Python 3..."
-        sudo apt update
-        sudo apt install -y python3 python3-venv python3-pip
+
+        # Check for `sudo` and install Python 3
+        if command -v sudo &> /dev/null; then
+            sudo apt update
+            sudo apt install -y python3 python3-venv python3-pip
+        else
+            echo "Error: 'sudo' command not found. Please install Python 3 manually and re-run the script."
+            exit 1
+        fi
     else
         echo "Python 3 is already installed."
+    fi
+
+    # Check if `python` is symlinked to `python3` and fix it
+    if ! command -v python &> /dev/null; then
+        echo "Creating symlink for 'python' to point to 'python3'..."
+        if command -v sudo &> /dev/null; then
+            sudo ln -sf /usr/bin/python3 /usr/bin/python
+        else
+            echo "Error: 'sudo' command not found. Please create the symlink manually: 'ln -sf /usr/bin/python3 /usr/bin/python'."
+            exit 1
+        fi
     fi
 }
 
