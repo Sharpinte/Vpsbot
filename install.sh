@@ -67,7 +67,7 @@ install_bot_and_web() {
     read NOTIFICATION_CHANNEL
 
     # Correctly format the admins array
-    ADMIN_IDS_ARRAY=$(echo "$ADMIN_IDS" | sed 's/,/\", \"/g') # This handles proper comma separation and quotes
+    ADMIN_IDS_ARRAY=$(echo "$ADMIN_IDS" | awk -F',' '{for(i=1; i<=NF; i++) $i="\""$i"\""} 1' OFS=', ')
 
     # Create config.json file
     echo "Creating the configuration file (config.json)..."
@@ -75,7 +75,7 @@ install_bot_and_web() {
 {
     "discord_token": "$DISCORD_TOKEN",
     "owners": ["$OWNER_ID"],
-    "admins": ["$ADMIN_IDS_ARRAY"],
+    "admins": [$ADMIN_IDS_ARRAY],
     "vps": {},
     "notification_channel": "$NOTIFICATION_CHANNEL"
 }
@@ -118,7 +118,7 @@ install_bot_only() {
     read NOTIFICATION_CHANNEL
 
     # Correctly format the admins array
-    ADMIN_IDS_ARRAY=$(echo "$ADMIN_IDS" | sed 's/,/\", \"/g') # This handles proper comma separation and quotes
+    ADMIN_IDS_ARRAY=$(echo "$ADMIN_IDS" | awk -F',' '{for(i=1; i<=NF; i++) $i="\""$i"\""} 1' OFS=', ')
 
     # Create config.json file
     echo "Creating the configuration file (config.json)..."
@@ -126,7 +126,7 @@ install_bot_only() {
 {
     "discord_token": "$DISCORD_TOKEN",
     "owners": ["$OWNER_ID"],
-    "admins": ["$ADMIN_IDS_ARRAY"],
+    "admins": [$ADMIN_IDS_ARRAY],
     "vps": {},
     "notification_channel": "$NOTIFICATION_CHANNEL"
 }
